@@ -1,0 +1,21 @@
+
+model Event {
+  id            String       @id @default(uuid())
+  title         String
+  description   String
+  venue         String?
+  eventLink     String?      // optional for online events
+  date          DateTime
+  time          String
+  type          EventType
+  fee           Float        @default(0)
+  ownerId       String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relations
+  owner         User         @relation("EventOwner", fields: [ownerId], references: [id])
+  participants  Participation[]
+  reviews       Review[]
+  invitations   Invitation[]
+}

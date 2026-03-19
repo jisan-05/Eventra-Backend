@@ -1,0 +1,14 @@
+model Invitation {
+  id          String       @id @default(uuid())
+  eventId     String
+  inviteeId   String
+  inviterId   String
+  status      InvitationStatus @default(PENDING)
+  sentAt      DateTime     @default(now())
+  respondedAt DateTime?
+
+  // Relations
+  event       Event        @relation(fields: [eventId], references: [id])
+  invitee     User         @relation("ReceivedInvitations", fields: [inviteeId], references: [id])
+  inviter     User         @relation("SentInvitations", fields: [inviterId], references: [id])
+}

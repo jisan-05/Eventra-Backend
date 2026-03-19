@@ -1,4 +1,25 @@
+
 enum Role {
-    ADMIN
-    USER
+  USER
+  ADMIN
+}
+
+enum EventType {
+  PUBLIC_FREE
+  PUBLIC_PAID
+  PRIVATE_FREE
+  PRIVATE_PAID
+}
+
+enum ParticipationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BANNED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

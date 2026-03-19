@@ -22,7 +22,9 @@ const auth = (...roles: Role[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // get user session
-      const session = req.cookies["_Secure-session_token"] || req.cookies["session_token"] ;
+      const session = await betterAuth.api.getSession({
+        headers: req.headers as any,
+      });
 
       if (!session) {
         return res.status(401).json({

@@ -1,0 +1,11 @@
+model Participation {
+  id          String       @id @default(uuid())
+  userId      String
+  eventId     String
+  status      ParticipationStatus @default(PENDING)
+  joinedAt    DateTime?    
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  event       Event        @relation(fields: [eventId], references: [id])
+}
