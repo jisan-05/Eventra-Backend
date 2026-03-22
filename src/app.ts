@@ -5,6 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { envVars } from './config/env';
 import cookieParser from 'cookie-parser';
 import { EventRoutes } from './modules/event/event.route';
+import { profileRouter } from './modules/user/user.route';
 
 const app: Application = express();
 
@@ -27,6 +28,8 @@ app.use(
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use("/api/v1/events", EventRoutes );
+
+app.use("/api/v1/users", profileRouter);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Apollo Gears World!');

@@ -26,23 +26,15 @@ export const auth = betterAuth({
                 type: "string",
                 required: false, // Don't require from client
                 defaultValue: Role.USER
-            }
+            },
+            isDeleted: {
+                type: "boolean",
+                required: false, // Don't require from client
+                defaultValue: false
+            },
         }
     },
-    databaseHooks: {
-        user: {
-            create: {
-                before: async (user) => {
-                    return {
-                        data: {
-                            ...user,
-                            role: Role.USER // Force role to USER ignoring client input!
-                        }
-                    };
-                }
-            }
-        }
-    },
+    
 
 
     // account: { skipStateCookieCheck: true }, // solved redirect issue
