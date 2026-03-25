@@ -11,13 +11,12 @@ const app: Application = express();
 
 // parsers
 app.use(express.json());
-app.use(cors());
 
 app.use(cookieParser());
 
 app.use(
   cors({
-    origin: [envVars.FRONTEND_URL],
+    origin: envVars.FRONTEND_URL,
     credentials: true,
   }),
 );
