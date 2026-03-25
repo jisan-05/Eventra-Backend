@@ -19,3 +19,6 @@ model Event {
   reviews       Review[]
   invitations   Invitation[]
 }
+
+
+

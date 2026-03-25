@@ -8,7 +8,7 @@ import { EventService } from "./event.service";
 const createEvent = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const ownerId = req.user?.id as string;
-  const result = await EventService.createEvent(payload,ownerId);
+  const result = await EventService.createEvent(payload, ownerId);
 
   sendResponse(res, {
     httpStatusCode: status.CREATED,
@@ -33,6 +33,36 @@ const getEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getEventById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const result = await EventService.getEventById(id as string);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Events retrieved successfully",
+    data: result,
+  });
+};
+
+const updateEvent = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = req.user
+  if(!user){
+    throw new Error("You are unauthorized!")
+  }
+  
+  const result = await EventService.updateEvent(id as string,user.id as string,req.body);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Events retrieved successfully",
+    data: result,
+  });
+};
+
 // Admin hard delete
 const deleteEventAdmin = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -47,10 +77,10 @@ const deleteEventAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Owner delete
-const deleteEventOwner = catchAsync(async (req: Request, res: Response) => {
+const deleteEventByOwner = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user?.id;
-  const result = await EventService.deleteEventByUser(
+  const result = await EventService.deleteEventByOwner(
     id as string,
     userId as string,
   );
@@ -67,5 +97,7 @@ export const EventController = {
   createEvent,
   getEvents, // ✅ role-based fetching
   deleteEventAdmin,
-  deleteEventOwner,
+  deleteEventByOwner,
+  getEventById,
+  updateEvent
 };

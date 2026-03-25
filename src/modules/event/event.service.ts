@@ -1,16 +1,15 @@
-
 import { Event } from "../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
-const createEvent = async(payload:Event,ownerId:string) => {
- const result = await prisma.event.create({
+const createEvent = async (payload: Event, ownerId: string) => {
+  const result = await prisma.event.create({
     data: {
       ...payload,
-      ownerId: ownerId
-    }
- })   
- return result
-}
+      ownerId: ownerId,
+    },
+  });
+  return result;
+};
 
 // Get events based on role
 const getEventsByRole = async (userId: string, role: string) => {
@@ -31,18 +30,59 @@ const deleteEvent = async (eventId: string) => {
 };
 
 // Owner delete
-const deleteEventByUser = async (eventId: string, userId: string) => {
-    console.log(eventId, userId);
+const deleteEventByOwner = async (eventId: string, userId: string) => {
+  console.log(eventId, userId);
   const event = await prisma.event.findUnique({ where: { id: eventId } });
-    console.log("event owner id:", event?.ownerId);
+  console.log("event owner id:", event?.ownerId);
   if (!event) throw new Error("Event not found");
-  if (event.ownerId !== userId) throw new Error("You can only delete your own events");
+  if (event.ownerId !== userId)
+    throw new Error("You can only delete your own events");
   return await prisma.event.delete({ where: { id: eventId } });
+};
+
+// get single event
+const getEventById = async (mealId: string) => {
+  return await prisma.event.findUnique({
+    where: {
+      id: mealId,
+    },
+  });
+};
+
+// update event
+const updateEvent = async (
+  eventId: string,
+  authorId: string,
+  data: Partial<Event>,
+) => {
+  const eventData = await prisma.event.findUniqueOrThrow({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      ownerId: true,
+    },
+  });
+  if (eventData.ownerId !== authorId) {
+    throw new Error("You are not the owner / creator of the post");
+  }
+
+  const result = await prisma.event.update({
+    where:{
+      id:eventData.id
+    },
+    data
+  })
+  return result
 };
 
 export const EventService = {
   createEvent,
-  getEventsByRole,    // ✅ role-based fetching
+  getEventsByRole, // ✅ role-based fetching
   deleteEvent,
-  deleteEventByUser,
+  deleteEventByOwner,
+  getEventById,
+  updateEvent,
+  
 };
