@@ -16,6 +16,6 @@ router.get("/",auth(Role.ADMIN),profileController.getAllUser)
 router.patch("/me",auth(),profileController.updateMyProfile)
 
 // for admin to delete user (soft delete)
-router.patch("/:id",auth(Role.ADMIN),profileController.deleteUser)
+router.delete("/:id", auth(Role.ADMIN), profileController.deleteUser);
 
 export const profileRouter = router
