@@ -14,7 +14,7 @@ const createCheckoutSession = catchAsync(async (req: Request, res: Response) => 
   // To be safe, let's take `eventId` and `userId` from body if not found in req.user.
   
   const userId = req.body.userId; // You should extract this securely from session typically
-  const { eventId } = req.body;
+  const { eventId, invitationId } = req.body;
 
   if (!userId || !eventId) {
     return sendResponse(res, {
@@ -24,7 +24,7 @@ const createCheckoutSession = catchAsync(async (req: Request, res: Response) => 
     });
   }
 
-  const result = await paymentService.createCheckoutSession(userId, eventId);
+  const result = await paymentService.createCheckoutSession(userId, eventId, invitationId);
 
   sendResponse(res, {
     httpStatusCode: httpStatus.OK,

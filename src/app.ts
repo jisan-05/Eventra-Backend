@@ -8,6 +8,9 @@ import { EventRoutes } from './modules/event/event.router';
 import { profileRouter } from './modules/user/user.router';
 import { PaymentRoutes } from './modules/Payment/payment.router';
 import { paymentController } from './modules/Payment/payment.controller';
+import { participationRoutes } from './modules/Participation/participation.router';
+import { invitationRoutes } from './modules/Invitation/invitation.router';
+import { reviewsRoutes } from './modules/Reviews/reviews.router';
 
 const app: Application = express();
 
@@ -36,6 +39,12 @@ app.use("/api/v1/events", EventRoutes );
 app.use("/api/v1/users", profileRouter);
 
 app.use("/api/v1/payments", PaymentRoutes);
+
+app.use("/api/v1/participations", participationRoutes);
+
+app.use("/api/v1/invitations", invitationRoutes);
+
+app.use("/api/v1/reviews", reviewsRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Apollo Gears World!');

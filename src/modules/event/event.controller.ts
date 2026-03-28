@@ -21,7 +21,7 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 // Get events based on role
 const getAllEvents = catchAsync(async (req: Request, res: Response) => {
   
-  const result = await EventService.getAllEvents();
+  const result = await EventService.getAllEvents(req.query);
 
   sendResponse(res, {
     httpStatusCode: status.OK,

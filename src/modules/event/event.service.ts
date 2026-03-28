@@ -18,8 +18,26 @@ const getMyEvents = async (userId: string) => {
   });
 };
 // Get events based on role
-const getAllEvents = async () => {
-  return await prisma.event.findMany();
+const getAllEvents = async (query: any) => {
+  const { search, type } = query;
+  const where: any = {};
+  
+  if (type) {
+    where.type = type;
+  }
+  
+  if (search) {
+    where.OR = [
+      { title: { contains: search as string, mode: "insensitive" } },
+      { owner: { name: { contains: search as string, mode: "insensitive" } } }
+    ];
+  }
+  
+  return await prisma.event.findMany({
+    where,
+    include: { owner: { select: { name: true } } },
+    orderBy: { createdAt: "desc" }
+  });
 };
 
 // Hard delete
@@ -44,6 +62,7 @@ const getEventById = async (mealId: string) => {
     where: {
       id: mealId,
     },
+    include: { owner: { select: { name: true, image: true, email: true } } }
   });
 };
 

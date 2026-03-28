@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import httpStatus from "http-status";
 
-const createCheckoutSession = async (userId: string, eventId: string) => {
+const createCheckoutSession = async (userId: string, eventId: string, invitationId?: string) => {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
   });
@@ -53,6 +53,7 @@ const createCheckoutSession = async (userId: string, eventId: string) => {
       userId,
       eventId,
       paymentId: payment.id,
+      ...(invitationId && { invitationId })
     },
   });
 
@@ -92,6 +93,14 @@ const handleWebhook = async (signature: string, body: Buffer) => {
         data: { status: "SUCCESS" },
       });
 
+      // Update Invitation if invitationId is present
+      if (metadata && metadata.invitationId) {
+        await prisma.invitation.update({
+          where: { id: metadata.invitationId },
+          data: { status: "ACCEPTED", respondedAt: new Date() }
+        });
+      }
+
       // Update participation status using metadata
       if (metadata && metadata.userId && metadata.eventId) {
         const existingParticipation = await prisma.participation.findFirst({
@@ -104,7 +113,7 @@ const handleWebhook = async (signature: string, body: Buffer) => {
         if (existingParticipation) {
           await prisma.participation.update({
             where: { id: existingParticipation.id },
-            data: { status: "APPROVED" },
+            data: { status: "PENDING" },
           });
         } else {
           // If no participation existed yet, create one
@@ -112,7 +121,7 @@ const handleWebhook = async (signature: string, body: Buffer) => {
             data: {
               userId: metadata.userId,
               eventId: metadata.eventId,
-              status: "APPROVED",
+              status: "PENDING",
               joinedAt: new Date(),
             },
           });
