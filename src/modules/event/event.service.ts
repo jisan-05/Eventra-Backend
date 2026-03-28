@@ -12,16 +12,14 @@ const createEvent = async (payload: Event, ownerId: string) => {
 };
 
 // Get events based on role
-const getEventsByRole = async (userId: string, role: string) => {
-  if (role === "ADMIN") {
-    // Admin can get all events
-    return await prisma.event.findMany();
-  } else {
-    // User can get only their own events
-    return await prisma.event.findMany({
-      where: { ownerId: userId },
-    });
-  }
+const getMyEvents = async (userId: string) => {
+  return await prisma.event.findMany({
+    where: { ownerId: userId },
+  });
+};
+// Get events based on role
+const getAllEvents = async () => {
+  return await prisma.event.findMany();
 };
 
 // Hard delete
@@ -69,20 +67,20 @@ const updateEvent = async (
   }
 
   const result = await prisma.event.update({
-    where:{
-      id:eventData.id
+    where: {
+      id: eventData.id,
     },
-    data
-  })
-  return result
+    data,
+  });
+  return result;
 };
 
 export const EventService = {
   createEvent,
-  getEventsByRole, // ✅ role-based fetching
+  getMyEvents, // ✅ role-based fetching
   deleteEvent,
   deleteEventByOwner,
   getEventById,
   updateEvent,
-  
+  getAllEvents,
 };

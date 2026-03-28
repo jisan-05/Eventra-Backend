@@ -7,13 +7,13 @@
     "start": "node dist/server.mjs",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "prisma generate && tsc && node src/scripts/fix-imports.js",
-    "build:tsup":"tsup",
+    "build:tsup": "tsup",
     "seed:admin": "npx tsx src/scripts/seedAdmin.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write .",
-    "migrate":"prisma migrate dev",
-    "generate":"prisma generate",
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
     "postinstall": "prisma generate"
   },
   "keywords": [
@@ -36,6 +36,7 @@
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
+    "stripe": "^21.0.1",
     "tsup": "^8.5.1",
     "zod": "^4.3.6"
   },
@@ -54,4 +55,3 @@
     "typescript": "^5.9.3"
   }
 }
-

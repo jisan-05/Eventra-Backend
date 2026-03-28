@@ -16,6 +16,7 @@ model User {
   events         Event[]         @relation("EventOwner")
   participations Participation[]
   reviews        Review[]
+  payments       Payment[]
 
   // Invitations
   sentInvitations     Invitation[] @relation("SentInvitations")

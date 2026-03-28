@@ -9,11 +9,14 @@ const router = Router()
 
 router.post("/",auth(Role.USER,Role.ADMIN), EventController.createEvent)
 
-// Get events (Admin sees all, user sees only their own)
-router.get("/", auth(Role.USER, Role.ADMIN), EventController.getEvents);
+// Get All events 
+router.get("/", EventController.getAllEvents);
+
+// get my events
+router.get("/my-events", auth(), EventController.getMyEvents);
 
 // Get single events
-router.get("/:id", auth(Role.USER, Role.ADMIN), EventController.getEventById);
+router.get("/:id", EventController.getEventById);
 
 // update event (own event)
 router.patch("/:id", auth(), EventController.updateEvent);
@@ -25,3 +28,5 @@ router.delete("/admin/:id", auth(Role.ADMIN), EventController.deleteEventAdmin);
 router.delete("/owner/:id", auth(Role.USER, Role.ADMIN), EventController.deleteEventByOwner);
 
 export const EventRoutes = router;  
+
+

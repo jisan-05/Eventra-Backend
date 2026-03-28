@@ -19,11 +19,22 @@ const createEvent = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Get events based on role
-const getEvents = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.id as string;
-  const role = req.user?.role as string;
+const getAllEvents = catchAsync(async (req: Request, res: Response) => {
+  
+  const result = await EventService.getAllEvents();
 
-  const result = await EventService.getEventsByRole(userId, role);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Events retrieved successfully",
+    data: result,
+  });
+});
+// Get events based on role
+const getMyEvents = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+
+  const result = await EventService.getMyEvents(userId);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -95,9 +106,11 @@ const deleteEventByOwner = catchAsync(async (req: Request, res: Response) => {
 
 export const EventController = {
   createEvent,
-  getEvents, // ✅ role-based fetching
+  getMyEvents,
   deleteEventAdmin,
   deleteEventByOwner,
   getEventById,
-  updateEvent
+  updateEvent,
+  getAllEvents
+
 };

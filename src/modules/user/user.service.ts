@@ -8,7 +8,7 @@ const getMyProfile = async (userId: string) => {
   });
   return result;
 };
-
+  
 const getAllUser = async()=>{
   const result = await prisma.user.findMany()
   return result

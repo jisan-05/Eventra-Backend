@@ -18,6 +18,7 @@ model Event {
   participants  Participation[]
   reviews       Review[]
   invitations   Invitation[]
+  payments      Payment[]
 }
 
 
