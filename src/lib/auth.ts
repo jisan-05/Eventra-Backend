@@ -13,8 +13,9 @@ export const auth = betterAuth({
         provider: "postgresql", // or "mysql", "postgresql", ...etc
     }),
 
-    baseURL: envVars.FRONTEND_URL,
-    trustedOrigins: [envVars.FRONTEND_URL],
+    // Server issuing sessions (Express). Client may use Next.js rewrite to the same origin.
+    baseURL: envVars.BETTER_AUTH_URL,
+    trustedOrigins: [envVars.FRONTEND_URL, envVars.BETTER_AUTH_URL],
 
     //...other options
     emailAndPassword: {
