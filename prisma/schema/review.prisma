@@ -10,4 +10,6 @@ model Review {
   // Relations
   event       Event        @relation(fields: [eventId], references: [id])
   user        User         @relation(fields: [userId], references: [id])
+
+  @@unique([userId, eventId])
 }
