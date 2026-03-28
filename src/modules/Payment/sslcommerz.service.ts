@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { assertUserHasNotPaidForEvent } from "./payment-guards";
 
 const SANDBOX_INIT = "https://sandbox.sslcommerz.com/gwprocess/v4/api.php";
 const SANDBOX_VALIDATE = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php";
@@ -34,6 +35,8 @@ export async function createSslcommerzSession(
   if (!event || event.fee <= 0) {
     throw new Error("Invalid paid event");
   }
+
+  await assertUserHasNotPaidForEvent(userId, eventId);
 
   const tranId = `${eventId.slice(0, 8)}-${Date.now()}`;
 

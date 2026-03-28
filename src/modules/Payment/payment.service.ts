@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { getStripe } from "../../lib/stripe";
 import * as sslcommerz from "./sslcommerz.service";
+import { assertUserHasNotPaidForEvent } from "./payment-guards";
 
 const provider = () => (process.env.PAYMENT_PROVIDER || "stripe").toLowerCase();
 
@@ -22,6 +23,8 @@ const createStripeCheckoutSession = async (
     throw new Error("Event is free, no payment required.");
   }
 
+  await assertUserHasNotPaidForEvent(userId, eventId);
+
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
   const payment = await prisma.payment.create({
@@ -39,7 +42,8 @@ const createStripeCheckoutSession = async (
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     mode: "payment",
-    success_url: `${frontendUrl}/events/${eventId}?success=true`,
+    // Stripe replaces {CHECKOUT_SESSION_ID}; needed when webhook is not reachable (e.g. localhost).
+    success_url: `${frontendUrl}/events/${eventId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl}/events/${eventId}?canceled=true`,
     client_reference_id: payment.id,
     line_items: [
@@ -69,6 +73,109 @@ const createStripeCheckoutSession = async (
   });
 
   return { url: session.url };
+};
+
+/** Shared fulfillment after Stripe marks payment paid (webhook or return-URL confirm). */
+async function fulfillAfterSuccessfulStripePayment(args: {
+  paymentId: string;
+  userId: string;
+  eventId: string;
+  invitationId?: string | null;
+}) {
+  const { paymentId, userId, eventId, invitationId } = args;
+
+  const row = await prisma.payment.findUnique({ where: { id: paymentId } });
+  if (!row) {
+    return;
+  }
+  if (row.userId !== userId || row.eventId !== eventId) {
+    return;
+  }
+  if (row.status === "SUCCESS") {
+    return;
+  }
+
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status: "SUCCESS" },
+  });
+
+  if (invitationId) {
+    try {
+      await prisma.invitation.update({
+        where: { id: invitationId },
+        data: { status: "ACCEPTED", respondedAt: new Date() },
+      });
+    } catch {
+      /* ignore invalid invitation id */
+    }
+  }
+
+  const existingParticipation = await prisma.participation.findFirst({
+    where: { userId, eventId },
+  });
+
+  if (existingParticipation) {
+    await prisma.participation.update({
+      where: { id: existingParticipation.id },
+      data: { status: "PENDING" },
+    });
+  } else {
+    await prisma.participation.create({
+      data: {
+        userId,
+        eventId,
+        status: "PENDING",
+      },
+    });
+  }
+}
+
+/**
+ * Call after redirect from Stripe Checkout when webhooks are not configured (typical on localhost).
+ * Verifies the session is paid and metadata matches the logged-in user.
+ */
+export const confirmStripeSessionForUser = async (userId: string, stripeSessionId: string) => {
+  if (provider() !== "stripe") {
+    throw new Error("Stripe confirmation is only used when PAYMENT_PROVIDER=stripe");
+  }
+  const stripe = getStripe();
+  const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+
+  if (session.payment_status !== "paid") {
+    throw new Error("Payment is not completed yet");
+  }
+
+  const metadata = session.metadata || {};
+  if (metadata.userId !== userId) {
+    throw new Error("This checkout session does not belong to your account");
+  }
+
+  const paymentId = session.client_reference_id || metadata.paymentId;
+  const eventId = metadata.eventId;
+  if (!paymentId || !eventId) {
+    throw new Error("Invalid checkout session data");
+  }
+
+  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+  if (!payment || payment.userId !== userId) {
+    throw new Error("Payment record not found");
+  }
+
+  if (payment.status === "SUCCESS") {
+    return { alreadyProcessed: true as const };
+  }
+
+  const invitationId = metadata.invitationId || payment.invitationId || undefined;
+
+  await fulfillAfterSuccessfulStripePayment({
+    paymentId,
+    userId,
+    eventId,
+    invitationId: invitationId ?? null,
+  });
+
+  return { alreadyProcessed: false as const };
 };
 
 export const createCheckoutSession = async (
@@ -114,42 +221,13 @@ const handleStripeWebhook = async (signature: string, body: Buffer) => {
     const paymentId = session.client_reference_id;
     const metadata = session.metadata;
 
-    if (paymentId) {
-      await prisma.payment.update({
-        where: { id: paymentId },
-        data: { status: "SUCCESS" },
+    if (paymentId && metadata?.userId && metadata?.eventId) {
+      await fulfillAfterSuccessfulStripePayment({
+        paymentId,
+        userId: metadata.userId,
+        eventId: metadata.eventId,
+        invitationId: metadata.invitationId ?? null,
       });
-
-      if (metadata && metadata.invitationId) {
-        await prisma.invitation.update({
-          where: { id: metadata.invitationId },
-          data: { status: "ACCEPTED", respondedAt: new Date() },
-        });
-      }
-
-      if (metadata && metadata.userId && metadata.eventId) {
-        const existingParticipation = await prisma.participation.findFirst({
-          where: {
-            userId: metadata.userId,
-            eventId: metadata.eventId,
-          },
-        });
-
-        if (existingParticipation) {
-          await prisma.participation.update({
-            where: { id: existingParticipation.id },
-            data: { status: "PENDING" },
-          });
-        } else {
-          await prisma.participation.create({
-            data: {
-              userId: metadata.userId,
-              eventId: metadata.eventId,
-              status: "PENDING",
-            },
-          });
-        }
-      }
     }
   }
 
@@ -165,5 +243,6 @@ export const handleWebhook = async (signature: string, body: Buffer) => {
 
 export const paymentService = {
   createCheckoutSession,
+  confirmStripeSessionForUser,
   handleWebhook,
 };

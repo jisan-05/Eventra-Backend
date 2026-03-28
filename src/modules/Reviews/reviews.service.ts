@@ -70,7 +70,7 @@ const deleteReview = async (reviewId: string, userId: string) => {
 const getMyReviews = async (userId: string) => {
   return await prisma.review.findMany({
     where: { userId },
-    include: { event: { select: { title: true } } },
+    include: { event: { select: { id: true, title: true } } },
     orderBy: { createdAt: "desc" }
   });
 };

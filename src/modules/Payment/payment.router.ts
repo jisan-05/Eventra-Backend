@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.post("/create-checkout-session", auth(), paymentController.createCheckoutSession);
 
+router.post("/confirm-stripe-session", auth(), paymentController.confirmStripeSession);
+
 router.get("/sslcommerz/success", paymentController.sslcommerzSuccess);
 
 router.post(

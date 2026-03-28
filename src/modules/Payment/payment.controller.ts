@@ -5,6 +5,34 @@ import httpStatus from "http-status";
 import { paymentService } from "./payment.service";
 import * as sslcommerz from "./sslcommerz.service";
 
+const confirmStripeSession = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const sessionId = (req.body?.sessionId || req.body?.session_id) as string | undefined;
+  if (!sessionId || typeof sessionId !== "string") {
+    return sendResponse(res, {
+      httpStatusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "sessionId is required",
+    });
+  }
+
+  try {
+    const result = await paymentService.confirmStripeSessionForUser(userId, sessionId.trim());
+    return sendResponse(res, {
+      httpStatusCode: httpStatus.OK,
+      success: true,
+      message: result.alreadyProcessed ? "Payment already recorded" : "Payment confirmed; your request is pending host approval",
+      data: result,
+    });
+  } catch (e: any) {
+    return sendResponse(res, {
+      httpStatusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: e?.message || "Could not confirm payment",
+    });
+  }
+});
+
 const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const email = req.user?.email as string;
@@ -72,6 +100,7 @@ const sslcommerzIpn = catchAsync(async (req: Request, res: Response) => {
 
 export const paymentController = {
   createCheckoutSession,
+  confirmStripeSession,
   handleWebhook,
   sslcommerzSuccess,
   sslcommerzIpn,
