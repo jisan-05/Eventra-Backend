@@ -1,8 +1,15 @@
 import { prisma } from "../../lib/prisma";
-import { stripe } from "../../lib/stripe";
-import httpStatus from "http-status";
+import { getStripe } from "../../lib/stripe";
+import * as sslcommerz from "./sslcommerz.service";
 
-const createCheckoutSession = async (userId: string, eventId: string, invitationId?: string) => {
+const provider = () => (process.env.PAYMENT_PROVIDER || "stripe").toLowerCase();
+
+const createStripeCheckoutSession = async (
+  userId: string,
+  eventId: string,
+  invitationId?: string,
+) => {
+  const stripe = getStripe();
   const event = await prisma.event.findUnique({
     where: { id: eventId },
   });
@@ -15,10 +22,8 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
     throw new Error("Event is free, no payment required.");
   }
 
-  // Set frontend URL
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  // Create a pending payment record
   const payment = await prisma.payment.create({
     data: {
       amount: event.fee,
@@ -26,6 +31,8 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
       userId,
       eventId,
       status: "PENDING",
+      provider: "stripe",
+      invitationId: invitationId ?? null,
     },
   });
 
@@ -34,7 +41,6 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
     mode: "payment",
     success_url: `${frontendUrl}/events/${eventId}?success=true`,
     cancel_url: `${frontendUrl}/events/${eventId}?canceled=true`,
-    customer_email: undefined, // Could grab user email if needed
     client_reference_id: payment.id,
     line_items: [
       {
@@ -44,7 +50,7 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
             name: event.title,
             description: event.description || "Event Participation Fee",
           },
-          unit_amount: Math.round(event.fee * 100), // Stripe expects cents
+          unit_amount: Math.round(event.fee * 100),
         },
         quantity: 1,
       },
@@ -53,11 +59,10 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
       userId,
       eventId,
       paymentId: payment.id,
-      ...(invitationId && { invitationId })
+      ...(invitationId && { invitationId }),
     },
   });
 
-  // Update payment with the checkout session id
   await prisma.payment.update({
     where: { id: payment.id },
     data: { stripeSessionId: session.id },
@@ -66,7 +71,30 @@ const createCheckoutSession = async (userId: string, eventId: string, invitation
   return { url: session.url };
 };
 
-const handleWebhook = async (signature: string, body: Buffer) => {
+export const createCheckoutSession = async (
+  userId: string,
+  userEmail: string,
+  userName: string,
+  eventId: string,
+  invitationId?: string,
+) => {
+  const p = provider();
+  if (p === "sslcommerz") {
+    return sslcommerz.createSslcommerzSession(userId, eventId, invitationId, userEmail, userName);
+  }
+  if (p === "stripe") {
+    return createStripeCheckoutSession(userId, eventId, invitationId);
+  }
+  if (p === "shurjopay") {
+    throw new Error(
+      "ShurjoPay is not wired in this build. Use PAYMENT_PROVIDER=stripe or sslcommerz, or add a ShurjoPay adapter alongside sslcommerz.service.ts.",
+    );
+  }
+  throw new Error(`Unknown PAYMENT_PROVIDER "${p}". Use stripe or sslcommerz.`);
+};
+
+const handleStripeWebhook = async (signature: string, body: Buffer) => {
+  const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
@@ -87,21 +115,18 @@ const handleWebhook = async (signature: string, body: Buffer) => {
     const metadata = session.metadata;
 
     if (paymentId) {
-      // Mark payment as success
       await prisma.payment.update({
         where: { id: paymentId },
         data: { status: "SUCCESS" },
       });
 
-      // Update Invitation if invitationId is present
       if (metadata && metadata.invitationId) {
         await prisma.invitation.update({
           where: { id: metadata.invitationId },
-          data: { status: "ACCEPTED", respondedAt: new Date() }
+          data: { status: "ACCEPTED", respondedAt: new Date() },
         });
       }
 
-      // Update participation status using metadata
       if (metadata && metadata.userId && metadata.eventId) {
         const existingParticipation = await prisma.participation.findFirst({
           where: {
@@ -116,13 +141,11 @@ const handleWebhook = async (signature: string, body: Buffer) => {
             data: { status: "PENDING" },
           });
         } else {
-          // If no participation existed yet, create one
           await prisma.participation.create({
             data: {
               userId: metadata.userId,
               eventId: metadata.eventId,
               status: "PENDING",
-              joinedAt: new Date(),
             },
           });
         }
@@ -131,6 +154,13 @@ const handleWebhook = async (signature: string, body: Buffer) => {
   }
 
   return { received: true };
+};
+
+export const handleWebhook = async (signature: string, body: Buffer) => {
+  if (provider() !== "stripe") {
+    return { received: true, message: "Stripe webhook skipped for current PAYMENT_PROVIDER" };
+  }
+  return handleStripeWebhook(signature, body);
 };
 
 export const paymentService = {
