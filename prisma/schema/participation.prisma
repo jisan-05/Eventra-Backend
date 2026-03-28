@@ -8,4 +8,6 @@ model Participation {
   // Relations
   user        User         @relation(fields: [userId], references: [id])
   event       Event        @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
 }
