@@ -1,5 +1,7 @@
 import { prisma } from "../../lib/prisma";
 
+const REVIEW_EDIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
 const createReview = async (userId: string, eventId: string, rating: number, comment: string) => {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) throw new Error("Event not found");
@@ -39,6 +41,11 @@ const updateReview = async (reviewId: string, userId: string, rating: number, co
   if (!review) throw new Error("Review not found");
   if (review.userId !== userId) throw new Error("Unauthorized");
 
+  const elapsed = Date.now() - new Date(review.createdAt).getTime();
+  if (elapsed > REVIEW_EDIT_WINDOW_MS) {
+    throw new Error("Reviews can only be edited within 14 days of posting");
+  }
+
   return await prisma.review.update({
     where: { id: reviewId },
     data: { rating, comment }
@@ -49,6 +56,11 @@ const deleteReview = async (reviewId: string, userId: string) => {
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
   if (!review) throw new Error("Review not found");
   if (review.userId !== userId) throw new Error("Unauthorized");
+
+  const elapsed = Date.now() - new Date(review.createdAt).getTime();
+  if (elapsed > REVIEW_EDIT_WINDOW_MS) {
+    throw new Error("Reviews can only be deleted within 14 days of posting");
+  }
 
   return await prisma.review.delete({
     where: { id: reviewId }
