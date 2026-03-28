@@ -47,7 +47,20 @@ app.use("/api/v1/invitations", invitationRoutes);
 app.use("/api/v1/reviews", reviewsRoutes);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from Apollo Gears World!');
+  res.send('Planora API — event platform');
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: Request, res: Response, _next: unknown) => {
+  console.error(err);
+  const message = err instanceof Error ? err.message : "Internal server error";
+  const m = message.toLowerCase();
+  const status =
+    m.includes("not found") ? 404
+    : m.includes("unauthorized") || m.includes("forbidden") || m.includes("not allowed") || m.includes("only delete") || m.includes("not the owner") ? 403
+    : m.includes("required") || m.includes("invalid") || m.includes("already") || m.includes("payment") ? 400
+    : 500;
+  res.status(status).json({ success: false, message });
 });
 
 export default app;
