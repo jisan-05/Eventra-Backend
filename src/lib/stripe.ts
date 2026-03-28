@@ -1,7 +1,17 @@
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
-export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-02-24.acacia' as any, // bypassing strict union type locally
-  typescript: true,
-});
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
+  if (!_stripe) {
+    _stripe = new Stripe(key, {
+      apiVersion: "2025-02-24.acacia" as any,
+      typescript: true,
+    });
+  }
+  return _stripe;
+}
