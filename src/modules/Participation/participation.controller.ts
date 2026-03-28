@@ -4,6 +4,7 @@ import { sendResponse } from "../../shared/sendResponse";
 import httpStatus from "http-status";
 import { participationService } from "./participation.service";
 
+/** Free public joins immediately; free private creates PENDING; paid flows use checkout instead. */
 const requestToJoin = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id as string;
   const { eventId } = req.params;

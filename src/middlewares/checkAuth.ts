@@ -19,7 +19,7 @@ declare global {
 const auth = (...roles: Role[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // get user session
+      // Cookie forwarded from Next.js rewrites must be present on this request.
       const session = await betterAuth.api.getSession({
         headers: req.headers as any,
       });

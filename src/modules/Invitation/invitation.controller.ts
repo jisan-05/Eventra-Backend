@@ -5,6 +5,7 @@ import httpStatus from "http-status";
 import { invitationService } from "./invitation.service";
 import { InvitationStatus } from "../../generated/prisma/enums";
 
+/** Host-only: invite by email; paid invites complete via payment then host approval. */
 const inviteUser = catchAsync(async (req: Request, res: Response) => {
   const inviterId = req.user?.id as string;
   const { eventId, email } = req.body;
