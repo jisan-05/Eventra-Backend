@@ -4,6 +4,12 @@ import auth from "../../middlewares/checkAuth";
 
 const router = express.Router();
 
+router.get(
+  "/event/:eventId/status",
+  auth(),
+  paymentController.getMyEventPaymentStatus,
+);
+
 router.post("/create-checkout-session", auth(), paymentController.createCheckoutSession);
 
 router.post("/confirm-stripe-session", auth(), paymentController.confirmStripeSession);

@@ -98,10 +98,23 @@ const sslcommerzIpn = catchAsync(async (req: Request, res: Response) => {
   }
 });
 
+const getMyEventPaymentStatus = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string;
+  const { eventId } = req.params;
+  const result = await paymentService.getUserEventPaymentStatus(userId, eventId as string);
+  sendResponse(res, {
+    httpStatusCode: httpStatus.OK,
+    success: true,
+    message: "Payment status fetched",
+    data: result,
+  });
+});
+
 export const paymentController = {
   createCheckoutSession,
   confirmStripeSession,
   handleWebhook,
   sslcommerzSuccess,
   sslcommerzIpn,
+  getMyEventPaymentStatus,
 };

@@ -75,10 +75,22 @@ const getMyReviews = async (userId: string) => {
   });
 };
 
+const getRecentReviews = async (limit = 6) => {
+  return await prisma.review.findMany({
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    include: {
+      user: { select: { name: true, image: true } },
+      event: { select: { id: true, title: true } },
+    },
+  });
+};
+
 export const reviewsService = {
   createReview,
   getEventReviews,
   getMyReviews,
   updateReview,
   deleteReview,
+  getRecentReviews,
 };

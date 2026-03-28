@@ -38,10 +38,16 @@ const getMyReviews = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { httpStatusCode: httpStatus.OK, success: true, message: "My reviews fetched", data: result });
 });
 
+const getRecentReviews = catchAsync(async (_req: Request, res: Response) => {
+  const result = await reviewsService.getRecentReviews(6);
+  sendResponse(res, { httpStatusCode: httpStatus.OK, success: true, message: "Recent reviews fetched", data: result });
+});
+
 export const reviewsController = {
   createReview,
   getEventReviews,
   getMyReviews,
   updateReview,
   deleteReview,
+  getRecentReviews,
 };

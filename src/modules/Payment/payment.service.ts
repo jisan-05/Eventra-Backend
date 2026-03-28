@@ -241,8 +241,18 @@ export const handleWebhook = async (signature: string, body: Buffer) => {
   return handleStripeWebhook(signature, body);
 };
 
+/** User has a SUCCESS payment row for this event (checkout fulfilled). */
+export const getUserEventPaymentStatus = async (userId: string, eventId: string) => {
+  const paid = await prisma.payment.findFirst({
+    where: { userId, eventId, status: "SUCCESS" },
+    select: { id: true },
+  });
+  return { hasSuccessfulPayment: !!paid };
+};
+
 export const paymentService = {
   createCheckoutSession,
   confirmStripeSessionForUser,
   handleWebhook,
+  getUserEventPaymentStatus,
 };

@@ -11,6 +11,7 @@ import { paymentController } from './modules/Payment/payment.controller';
 import { participationRoutes } from './modules/Participation/participation.router';
 import { invitationRoutes } from './modules/Invitation/invitation.router';
 import { reviewsRoutes } from './modules/Reviews/reviews.router';
+import { statsRoutes } from './modules/stats/stats.router';
 
 const app: Application = express();
 
@@ -45,6 +46,8 @@ app.use("/api/v1/participations", participationRoutes);
 app.use("/api/v1/invitations", invitationRoutes);
 
 app.use("/api/v1/reviews", reviewsRoutes);
+
+app.use("/api/v1/stats", statsRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Planora API — event platform');

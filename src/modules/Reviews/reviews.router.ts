@@ -5,6 +5,7 @@ import { reviewsController } from "./reviews.controller";
 const router = Router();
 
 router.post("/", auth(), reviewsController.createReview);
+router.get("/recent", reviewsController.getRecentReviews);
 router.get("/my-reviews", auth(), reviewsController.getMyReviews);
 router.get("/event/:eventId", reviewsController.getEventReviews);
 router.patch("/:id", auth(), reviewsController.updateReview);
