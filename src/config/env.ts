@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: ".env", override: true });
 
 interface EnvConfig {
   NODE_ENV: string;
@@ -8,7 +8,11 @@ interface EnvConfig {
   DATABASE_URL: string;
   BETTER_AUTH_SECRET:string,
   BETTER_AUTH_URL:string,
-  STRIPE_SECRET_KEY:string
+  STRIPE_SECRET_KEY:string,
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  FACEBOOK_CLIENT_ID: string;
+  FACEBOOK_CLIENT_SECRET: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -19,7 +23,11 @@ const loadEnvVariables = (): EnvConfig => {
     "FRONTEND_URL",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
-    "STRIPE_SECRET_KEY"
+    "STRIPE_SECRET_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "FACEBOOK_CLIENT_ID",
+    "FACEBOOK_CLIENT_SECRET",
   ];
 
   requireEnvVariable.forEach((variable) => {
@@ -35,7 +43,11 @@ const loadEnvVariables = (): EnvConfig => {
     DATABASE_URL: process.env.DATABASE_URL as string,
     BETTER_AUTH_SECRET:process.env.BETTER_AUTH_SECRET as string,
     BETTER_AUTH_URL:process.env.BETTER_AUTH_URL as string,
-    STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY as string
+    STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY as string,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
+    FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID as string,
+    FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET as string,
   };
 };
 

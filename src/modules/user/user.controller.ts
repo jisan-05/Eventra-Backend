@@ -71,10 +71,45 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
+const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body as { role?: "ADMIN" | "USER" | "MANAGER" };
+
+    if (!id || !role) {
+      return res.status(400).json({
+        success: false,
+        message: "User id and role are required",
+      });
+    }
+
+    if (!["ADMIN", "USER", "MANAGER"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role value",
+      });
+    }
+
+    const result = await profileService.updateUserRole(id as string, role);
+    return res.status(200).json({
+      success: true,
+      message: "User role updated",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to update user role",
+      details: error,
+    });
+  }
+};
+
 
 export const profileController = {
   getMyProfile,
   updateMyProfile,
   deleteUser,
-  getAllUser
+  getAllUser,
+  updateUserRole,
 };

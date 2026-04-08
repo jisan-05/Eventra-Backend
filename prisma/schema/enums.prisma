@@ -2,6 +2,7 @@
 enum Role {
   USER
   ADMIN
+  MANAGER
 }
 
 enum EventType {

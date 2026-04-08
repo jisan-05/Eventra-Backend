@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { Role } from "../generated/prisma/enums";
 import { auth as betterAuth } from "../lib/auth";
+
+type UserRole = "ADMIN" | "USER" | "MANAGER";
 
 declare global {
   namespace Express {
@@ -16,7 +17,7 @@ declare global {
   }
 }
 
-const auth = (...roles: Role[]) => {
+const auth = (...roles: UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Cookie forwarded from Next.js rewrites must be present on this request.
@@ -40,7 +41,7 @@ const auth = (...roles: Role[]) => {
         emailVerified: session.user.emailVerified,
       };
 
-      if (roles.length && !roles.includes(req.user.role as Role)) {
+      if (roles.length && !roles.includes(req.user.role as UserRole)) {
         return res.status(403).json({
           success: false,
           message:

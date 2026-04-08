@@ -36,11 +36,23 @@ const deleteUser = async (userId: string) => {
   return result;
 };
 
+const updateUserRole = async (userId: string, role: "ADMIN" | "USER" | "MANAGER") => {
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      role: role as any,
+    },
+  });
+
+  return result;
+};
+
 
 export const profileService = {
   getMyProfile,
   getAllUser,
   updateMyProfile,
   deleteUser,
+  updateUserRole,
 
 };
